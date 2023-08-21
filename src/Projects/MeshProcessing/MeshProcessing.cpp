@@ -79,6 +79,7 @@ public:
 
                     using namespace Eigen;
                     using namespace std;
+                    //using std::stod;
 
                     // Tetrahedralize the interior
                     std::string flag("pq1.414");

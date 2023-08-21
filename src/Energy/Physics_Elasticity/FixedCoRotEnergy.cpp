@@ -19,8 +19,8 @@ namespace IPC {
 
 template <int dim>
 void FixedCoRotEnergy<dim>::computeEnergyVal(const Mesh<dim>& data, int redoSVD,
-    std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim>>>& svd,
-    std::vector<Eigen::Matrix<double, dim, dim>>& F,
+    std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim, 0, dim, dim>>>& svd,
+    std::vector<Eigen::Matrix<double, dim, dim, 0, dim, dim>>& F,
     double coef,
     double& energyVal) const
 {
@@ -28,8 +28,8 @@ void FixedCoRotEnergy<dim>::computeEnergyVal(const Mesh<dim>& data, int redoSVD,
 }
 template <int dim>
 void FixedCoRotEnergy<dim>::computeGradient(const Mesh<dim>& data, bool redoSVD,
-    std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim>>>& svd,
-    std::vector<Eigen::Matrix<double, dim, dim>>& F,
+    std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim, 0, dim, dim>>>& svd,
+    std::vector<Eigen::Matrix<double, dim, dim, 0, dim, dim>>& F,
     double coef,
     Eigen::VectorXd& gradient,
     bool projectDBC) const
@@ -38,8 +38,8 @@ void FixedCoRotEnergy<dim>::computeGradient(const Mesh<dim>& data, bool redoSVD,
 }
 template <int dim>
 void FixedCoRotEnergy<dim>::computeHessian(const Mesh<dim>& data, bool redoSVD,
-    std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim>>>& svd,
-    std::vector<Eigen::Matrix<double, dim, dim>>& F,
+    std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim, 0, dim, dim>>>& svd,
+    std::vector<Eigen::Matrix<double, dim, dim, 0, dim, dim>>& F,
     double coef,
     LinSysSolver<Eigen::VectorXi, Eigen::VectorXd>* linSysSolver,
     bool projectSPD,
@@ -53,28 +53,28 @@ void FixedCoRotEnergy<dim>::getEnergyValPerElem(const Mesh<dim>& data,
     Eigen::VectorXd& energyValPerElem,
     bool uniformWeight) const
 {
-    std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim>>> svd(data.F.rows());
-    std::vector<Eigen::Matrix<double, dim, dim>> F(data.F.rows());
+    std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim, 0, dim, dim>>> svd(data.F.rows());
+    std::vector<Eigen::Matrix<double, dim, dim, 0, dim, dim>> F(data.F.rows());
     Energy<dim>::getEnergyValPerElemBySVD(data, true, svd, F, energyValPerElem, uniformWeight);
 }
 
 template <int dim>
-void FixedCoRotEnergy<dim>::compute_E(const Eigen::Matrix<double, dim, 1>& singularValues,
+void FixedCoRotEnergy<dim>::compute_E(const Eigen::Matrix<double, dim, 1, 0, dim, 1>& singularValues,
     double u, double lambda,
     double& E) const
 {
-    const double sigmam12Sum = (singularValues - Eigen::Matrix<double, dim, 1>::Ones()).squaredNorm();
+    const double sigmam12Sum = (singularValues - Eigen::Matrix<double, dim, 1, 0, dim, 1>::Ones()).squaredNorm();
     const double sigmaProdm1 = singularValues.prod() - 1.0;
 
     E = u * sigmam12Sum + lambda / 2.0 * sigmaProdm1 * sigmaProdm1;
 }
 template <int dim>
-void FixedCoRotEnergy<dim>::compute_dE_div_dsigma(const Eigen::Matrix<double, dim, 1>& singularValues,
+void FixedCoRotEnergy<dim>::compute_dE_div_dsigma(const Eigen::Matrix<double, dim, 1, 0, dim, 1>& singularValues,
     double u, double lambda,
-    Eigen::Matrix<double, dim, 1>& dE_div_dsigma) const
+    Eigen::Matrix<double, dim, 1, 0, dim, 1>& dE_div_dsigma) const
 {
     const double sigmaProdm1lambda = lambda * (singularValues.prod() - 1.0);
-    Eigen::Matrix<double, dim, 1> sigmaProd_noI;
+    Eigen::Matrix<double, dim, 1, 0, dim, 1> sigmaProd_noI;
     if constexpr (dim == 2) {
         sigmaProd_noI[0] = singularValues[1];
         sigmaProd_noI[1] = singularValues[0];
@@ -93,12 +93,12 @@ void FixedCoRotEnergy<dim>::compute_dE_div_dsigma(const Eigen::Matrix<double, di
     }
 }
 template <int dim>
-void FixedCoRotEnergy<dim>::compute_d2E_div_dsigma2(const Eigen::Matrix<double, dim, 1>& singularValues,
+void FixedCoRotEnergy<dim>::compute_d2E_div_dsigma2(const Eigen::Matrix<double, dim, 1, 0, dim, 1>& singularValues,
     double u, double lambda,
-    Eigen::Matrix<double, dim, dim>& d2E_div_dsigma2) const
+    Eigen::Matrix<double, dim, dim, 0, dim, dim>& d2E_div_dsigma2) const
 {
     const double sigmaProd = singularValues.prod();
-    Eigen::Matrix<double, dim, 1> sigmaProd_noI;
+    Eigen::Matrix<double, dim, 1, 0, dim, 1> sigmaProd_noI;
     if constexpr (dim == 2) {
         sigmaProd_noI[0] = singularValues[1];
         sigmaProd_noI[1] = singularValues[0];
@@ -126,9 +126,9 @@ void FixedCoRotEnergy<dim>::compute_d2E_div_dsigma2(const Eigen::Matrix<double, 
     }
 }
 template <int dim>
-void FixedCoRotEnergy<dim>::compute_BLeftCoef(const Eigen::Matrix<double, dim, 1>& singularValues,
+void FixedCoRotEnergy<dim>::compute_BLeftCoef(const Eigen::Matrix<double, dim, 1, 0, dim, 1>& singularValues,
     double u, double lambda,
-    Eigen::Matrix<double, dim*(dim - 1) / 2, 1>& BLeftCoef) const
+    Eigen::Matrix<double, dim*(dim - 1) / 2, 1, 0, dim*(dim - 1) / 2, 1>& BLeftCoef) const
 {
     const double sigmaProd = singularValues.prod();
     const double halfLambda = lambda / 2.0;
@@ -142,12 +142,12 @@ void FixedCoRotEnergy<dim>::compute_BLeftCoef(const Eigen::Matrix<double, dim, 1
     }
 }
 template <int dim>
-void FixedCoRotEnergy<dim>::compute_dE_div_dF(const Eigen::Matrix<double, dim, dim>& F,
-    const AutoFlipSVD<Eigen::Matrix<double, dim, dim>>& svd,
+void FixedCoRotEnergy<dim>::compute_dE_div_dF(const Eigen::Matrix<double, dim, dim, 0, dim, dim>& F,
+    const AutoFlipSVD<Eigen::Matrix<double, dim, dim, 0, dim, dim>>& svd,
     double u, double lambda,
-    Eigen::Matrix<double, dim, dim>& dE_div_dF) const
+    Eigen::Matrix<double, dim, dim, 0, dim, dim>& dE_div_dF) const
 {
-    Eigen::Matrix<double, dim, dim> JFInvT;
+    Eigen::Matrix<double, dim, dim, 0, dim, dim> JFInvT;
     IglUtils::computeCofactorMtr(F, JFInvT);
     dE_div_dF = (u * 2 * (F - svd.matrixU() * svd.matrixV().transpose()) + lambda * (svd.singularValues().prod() - 1) * JFInvT);
 }
@@ -159,7 +159,7 @@ void FixedCoRotEnergy<dim>::checkEnergyVal(const Mesh<dim>& data) const // check
 
     double err = 0.0;
     for (int triI = 0; triI < data.F.rows(); triI++) {
-        AutoFlipSVD<Eigen::Matrix<double, dim, dim>> svd(Eigen::Matrix<double, dim, dim>::Identity());
+        AutoFlipSVD<Eigen::Matrix<double, dim, dim, 0, dim, dim>> svd(Eigen::Matrix<double, dim, dim, 0, dim, dim>::Identity());
 
         double energyVal;
         compute_E(svd.singularValues(), data.u[triI], data.lambda[triI], energyVal);

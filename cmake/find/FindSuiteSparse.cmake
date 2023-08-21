@@ -281,6 +281,7 @@ endmacro()
 unset(SUITESPARSE_FOUND_REQUIRED_VARS)
 
 # BLAS.
+list(APPEND CMAKE_PREFIX_PATH "D:/vcpkg/packages/openblas_x64-windows/")
 find_package(BLAS QUIET)
 if (NOT BLAS_FOUND)
   suitesparse_report_not_found(
@@ -289,6 +290,7 @@ endif (NOT BLAS_FOUND)
 list(APPEND SUITESPARSE_FOUND_REQUIRED_VARS BLAS_FOUND)
 
 # LAPACK.
+list(APPEND CMAKE_PREFIX_PATH "D:/vcpkg/packages/clapack_x64-windows/")
 find_package(LAPACK QUIET)
 if (NOT LAPACK_FOUND)
   suitesparse_report_not_found(
@@ -296,6 +298,7 @@ if (NOT LAPACK_FOUND)
 endif (NOT LAPACK_FOUND)
 list(APPEND SUITESPARSE_FOUND_REQUIRED_VARS LAPACK_FOUND)
 
+#list(APPEND CMAKE_PREFIX_PATH "D:/vcpkg/packages/suitesparse_x64-windows/include/suitesparse/")
 suitesparse_find_component(AMD REQUIRED FILES amd.h LIBRARIES amd)
 suitesparse_find_component(CAMD REQUIRED FILES camd.h LIBRARIES camd)
 suitesparse_find_component(COLAMD REQUIRED FILES colamd.h LIBRARIES colamd)

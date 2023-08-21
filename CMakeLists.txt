@@ -110,6 +110,7 @@ target_link_libraries(${PROJECT_NAME}_dev PUBLIC TBB::tbb)
 if(IPC_WITH_CHOLMOD)
   set(SUITESPARSE_INCLUDE_DIR_HINTS $ENV{SUITESPARSE_INC})
   set(SUITESPARSE_LIBRARY_DIR_HINTS $ENV{SUITESPARSE_LIB})
+  list(APPEND CMAKE_PREFIX_PATH "D:/vcpkg/packages/suitesparse_x64-windows/")
   find_package(SuiteSparse REQUIRED)
   target_link_libraries(${PROJECT_NAME}_dev PUBLIC ${SUITESPARSE_LIBRARIES})
   target_include_directories(${PROJECT_NAME}_dev PUBLIC ${SUITESPARSE_INCLUDE_DIRS})
@@ -120,6 +121,8 @@ include(osqp)
 target_link_libraries(${PROJECT_NAME}_dev PUBLIC osqp::osqp)
 
 # libigl
+#list(APPEND CMAKE_PREFIX_PATH "C:/Git Code/IPC/build/_deps/eigen-src/")
+#find_package(Eigen3 REQUIRED)
 include(eigen)
 include(libigl)
 target_link_libraries(${PROJECT_NAME}_dev PUBLIC igl::core igl::triangle igl::tetgen)
@@ -272,6 +275,7 @@ endif()
 
 # MKL Pardiso OSQP linear system solver
 if(IPC_WITH_OSQP_MKL)
+  list(APPEND CMAKE_PREFIX_PATH "D:/vcpkg/packages/intel-mkl_x64-windows/")
   find_library(MKL_RT_LIBRARY mkl_rt
                PATHS $ENV{MKLROOT}/lib
                      $ENV{MKLROOT}/lib/intel64

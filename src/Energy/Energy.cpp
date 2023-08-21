@@ -4,7 +4,7 @@
 //
 //  Created by Minchen Li on 9/4/17.
 //
-
+#define _HAS_STD_BYTE 0
 #include "Energy.hpp"
 #include "get_feasible_steps.hpp"
 #include "IglUtils.hpp"
@@ -47,8 +47,8 @@ bool Energy<dim>::getNeedElemInvSafeGuard(void) const
 
 template <int dim>
 void Energy<dim>::computeEnergyVal(const Mesh<dim>& data, int redoSVD,
-    std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim>>>& svd,
-    std::vector<Eigen::Matrix<double, dim, dim>>& F,
+    std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim, 0, dim, dim>>>& svd,
+    std::vector<Eigen::Matrix<double, dim, dim, 0, dim, dim>>& F,
     double coef,
     double& energyVal) const
 {
@@ -56,8 +56,8 @@ void Energy<dim>::computeEnergyVal(const Mesh<dim>& data, int redoSVD,
 }
 template <int dim>
 void Energy<dim>::computeGradient(const Mesh<dim>& data, bool redoSVD,
-    std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim>>>& svd,
-    std::vector<Eigen::Matrix<double, dim, dim>>& F,
+    std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim, 0, dim, dim>>>& svd,
+    std::vector<Eigen::Matrix<double, dim, dim, 0, dim, dim>>& F,
     double coef,
     Eigen::VectorXd& gradient,
     bool projectDBC) const
@@ -66,8 +66,8 @@ void Energy<dim>::computeGradient(const Mesh<dim>& data, bool redoSVD,
 }
 template <int dim>
 void Energy<dim>::computeHessian(const Mesh<dim>& data, bool redoSVD,
-    std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim>>>& svd,
-    std::vector<Eigen::Matrix<double, dim, dim>>& F,
+    std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim, 0, dim, dim>>>& svd,
+    std::vector<Eigen::Matrix<double, dim, dim, 0, dim, dim>>& F,
     double coef,
     LinSysSolver<Eigen::VectorXi, Eigen::VectorXd>* linSysSolver,
     bool projectSPD,
@@ -87,8 +87,8 @@ void Energy<dim>::checkGradient(const Mesh<dim>& data) const
 {
     std::cout << "checking energy gradient computation..." << std::endl;
 
-    std::vector<Eigen::Matrix<double, dim, dim>> F(data.F.rows());
-    std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim>>> svd(data.F.rows());
+    std::vector<Eigen::Matrix<double, dim, dim, 0, dim, dim>> F(data.F.rows());
+    std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim, 0, dim, dim>>> svd(data.F.rows());
 
     double energyVal0;
     computeEnergyVal(data, true, svd, F, 1.0, energyVal0);
@@ -135,8 +135,8 @@ void Energy<dim>::checkHessian(const Mesh<dim>& data, bool triplet) const
 {
     std::cout << "checking energy hessian computation..." << std::endl;
 
-    std::vector<Eigen::Matrix<double, dim, dim>> F(data.F.rows());
-    std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim>>> svd(data.F.rows());
+    std::vector<Eigen::Matrix<double, dim, dim, 0, dim, dim>> F(data.F.rows());
+    std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim, 0, dim, dim>>> svd(data.F.rows());
 
     Eigen::VectorXd gradient0;
     computeGradientByPK(data, true, svd, F, 1.0, gradient0);
@@ -193,8 +193,8 @@ void Energy<dim>::checkHessian(const Mesh<dim>& data, bool triplet) const
 
 template <int dim>
 void Energy<dim>::getEnergyValPerElemBySVD(const Mesh<dim>& data, int redoSVD,
-    std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim>>>& svd,
-    std::vector<Eigen::Matrix<double, dim, dim>>& F,
+    std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim, 0, dim, dim>>>& svd,
+    std::vector<Eigen::Matrix<double, dim, dim, 0, dim, dim>>& F,
     Eigen::VectorXd& energyValPerElem,
     bool uniformWeight) const
 {
@@ -205,8 +205,8 @@ void Energy<dim>::getEnergyValPerElemBySVD(const Mesh<dim>& data, int redoSVD,
     for (int triI = 0; triI < data.F.rows(); triI++) {
 #endif
         if (redoSVD) {
-            const Eigen::Matrix<int, 1, dim + 1>& triVInd = data.F.row(triI);
-            Eigen::Matrix<double, dim, dim> Xt;
+            const Eigen::Matrix<int, 1, dim + 1, 1, 1, dim + 1>& triVInd = data.F.row(triI);
+            Eigen::Matrix<double, dim, dim, 0, dim, dim> Xt;
             Xt.col(0) = (data.V.row(triVInd[1]) - data.V.row(triVInd[0])).transpose();
             Xt.col(1) = (data.V.row(triVInd[2]) - data.V.row(triVInd[0])).transpose();
             if constexpr (dim == 3) {
@@ -218,7 +218,7 @@ void Energy<dim>::getEnergyValPerElemBySVD(const Mesh<dim>& data, int redoSVD,
             // Eigen::Matrix2d F = Xt * A;
             // fprintf(out, "%le %le %le %le\n", F(0, 0), F(0, 1), F(1, 0), F(1, 1));
         }
-
+   
         compute_E(svd[triI].singularValues(), data.u[triI], data.lambda[triI], energyValPerElem[triI]);
         if (!uniformWeight) {
             energyValPerElem[triI] *= data.triArea[triI];
@@ -231,8 +231,8 @@ void Energy<dim>::getEnergyValPerElemBySVD(const Mesh<dim>& data, int redoSVD,
 
 template <int dim>
 void Energy<dim>::computeEnergyValBySVD(const Mesh<dim>& data, int redoSVD,
-    std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim>>>& svd,
-    std::vector<Eigen::Matrix<double, dim, dim>>& F,
+    std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim, 0, dim, dim>>>& svd,
+    std::vector<Eigen::Matrix<double, dim, dim, 0, dim, dim>>& F,
     double coef,
     double& energyVal) const
 {
@@ -242,21 +242,98 @@ void Energy<dim>::computeEnergyValBySVD(const Mesh<dim>& data, int redoSVD,
 }
 
 template <int dim>
+void Energy<dim>::computeGradientByPK1(const Mesh<dim>& data,
+    int elemI, bool redoSVD,
+    AutoFlipSVD<Eigen::Matrix<double, dim, dim, 0, dim, dim>>& svd,
+    Eigen::Matrix<double, dim, dim, 0, dim, dim>& F,
+    double coef,
+    Eigen::Matrix<double, dim*(dim + 1), 1, 0, dim*(dim + 1), 1>& gradient) const
+{
+    const Eigen::Matrix<double, dim, dim, 0, dim, dim>& A = data.restTriInv[elemI];
+
+    if (redoSVD) {
+        const Eigen::Matrix<int, 1, dim + 1, 1, 1, dim + 1>& triVInd = data.F.row(elemI);
+
+        Eigen::Matrix<double, dim, dim, 0, dim, dim> Xt;
+        Xt.col(0) = (data.V.row(triVInd[1]) - data.V.row(triVInd[0])).transpose();
+        Xt.col(1) = (data.V.row(triVInd[2]) - data.V.row(triVInd[0])).transpose();
+        if constexpr (dim == 3) {
+            Xt.col(2) = (data.V.row(triVInd[3]) - data.V.row(triVInd[0])).transpose();
+        }
+
+        F = Xt * A;
+
+        svd.compute(F, Eigen::ComputeFullU | Eigen::ComputeFullV);
+    }
+
+    Eigen::Matrix<double, dim, dim, 0, dim, dim> P;
+    compute_dE_div_dF(F, svd,
+        data.u[elemI], data.lambda[elemI], P);
+
+    const double w = coef * data.triArea[elemI];
+    P *= w;
+
+    IglUtils::dF_div_dx_mult(P, A, gradient);
+}
+template <int dim>
+void Energy<dim>::computeHessianByPK1(const Mesh<dim>& data,
+    int elemI, bool redoSVD,
+    AutoFlipSVD<Eigen::Matrix<double, dim, dim, 0, dim, dim>>& svd,
+    Eigen::Matrix<double, dim, dim, 0, dim, dim>& F,
+    double coef,
+    Eigen::Matrix<double, dim*(dim + 1), dim*(dim + 1), 0, dim*(dim + 1), dim*(dim + 1)>& hessian,
+    Eigen::Matrix<int, 1, dim + 1, 1, 1, dim + 1>& vInd,
+    bool projectSPD,
+    bool projectDBC) const
+{
+    const Eigen::Matrix<int, 1, dim + 1, 1, 1, dim + 1>& triVInd = data.F.row(elemI);
+
+    const Eigen::Matrix<double, dim, dim, 0, dim, dim>& A = data.restTriInv[elemI];
+
+    if (redoSVD) {
+        Eigen::Matrix<double, dim, dim, 0, dim, dim> Xt;
+        Xt.col(0) = (data.V.row(triVInd[1]) - data.V.row(triVInd[0])).transpose();
+        Xt.col(1) = (data.V.row(triVInd[2]) - data.V.row(triVInd[0])).transpose();
+        if constexpr (dim == 3) {
+            Xt.col(2) = (data.V.row(triVInd[3]) - data.V.row(triVInd[0])).transpose();
+        }
+        F = Xt * A;
+        svd.compute(F, Eigen::ComputeFullU | Eigen::ComputeFullV);
+    }
+
+    Eigen::Matrix<double, dim * dim, dim * dim, 0, dim * dim, dim * dim> wdP_div_dF;
+    const double w = coef * data.triArea[elemI];
+    compute_dP_div_dF(svd, data.u[elemI], data.lambda[elemI],
+        wdP_div_dF, w, projectSPD);
+
+    Eigen::Matrix<double, dim*(dim + 1), dim * dim, 0, dim*(dim + 1), dim * dim> wdP_div_dx;
+    IglUtils::dF_div_dx_mult<dim * dim>(wdP_div_dF.transpose(), A, wdP_div_dx, false);
+    IglUtils::dF_div_dx_mult<dim*(dim + 1)>(wdP_div_dx.transpose(), A, hessian, true);
+
+    vInd[0] = data.isProjectDBCVertex(triVInd[0], projectDBC) ? (-triVInd[0] - 1) : triVInd[0];
+    vInd[1] = data.isProjectDBCVertex(triVInd[1], projectDBC) ? (-triVInd[1] - 1) : triVInd[1];
+    vInd[2] = data.isProjectDBCVertex(triVInd[2], projectDBC) ? (-triVInd[2] - 1) : triVInd[2];
+    if constexpr (dim == 3) {
+        vInd[3] = data.isProjectDBCVertex(triVInd[3], projectDBC) ? (-triVInd[3] - 1) : triVInd[3];
+    }
+}
+
+template <int dim>
 void Energy<dim>::computeGradientByPK(const Mesh<dim>& data, bool redoSVD,
-    std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim>>>& svd,
-    std::vector<Eigen::Matrix<double, dim, dim>>& F,
+    std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim, 0, dim, dim>>>& svd,
+    std::vector<Eigen::Matrix<double, dim, dim, 0, dim, dim>>& F,
     double coef,
     Eigen::VectorXd& gradient,
     bool projectDBC) const
 {
-    std::vector<Eigen::Matrix<double, dim*(dim + 1), 1>> gradient_cont(data.F.rows());
+    std::vector<Eigen::Matrix<double, dim*(dim + 1), 1, 0, dim*(dim + 1), 1>> gradient_cont(data.F.rows());
 #ifdef USE_TBB
     tbb::parallel_for(0, (int)data.F.rows(), 1, [&](int triI)
 #else
     for (int triI = 0; triI < data.F.rows(); triI++)
 #endif
         {
-            computeGradientByPK(data, triI, redoSVD,
+            computeGradientByPK1(data, triI, redoSVD,
                 svd[triI], F[triI], coef,
                 gradient_cont[triI]);
         }
@@ -290,22 +367,22 @@ void Energy<dim>::computeGradientByPK(const Mesh<dim>& data, bool redoSVD,
 
 template <int dim>
 void Energy<dim>::computeHessianByPK(const Mesh<dim>& data, bool redoSVD,
-    std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim>>>& svd,
-    std::vector<Eigen::Matrix<double, dim, dim>>& F,
+    std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim, 0, dim, dim>>>& svd,
+    std::vector<Eigen::Matrix<double, dim, dim, 0, dim, dim>>& F,
     double coef,
     LinSysSolver<Eigen::VectorXi, Eigen::VectorXd>* linSysSolver,
     bool projectSPD,
     bool projectDBC) const
 {
-    std::vector<Eigen::Matrix<double, dim*(dim + 1), dim*(dim + 1)>> triHessians(data.F.rows());
-    std::vector<Eigen::Matrix<int, 1, dim + 1>> vInds(data.F.rows());
+    std::vector<Eigen::Matrix<double, dim*(dim + 1), dim*(dim + 1), 0, dim*(dim + 1), dim*(dim + 1)>> triHessians(data.F.rows());
+    std::vector<Eigen::Matrix<int, 1, dim + 1, 1, 1, dim + 1>> vInds(data.F.rows());
 #ifdef USE_TBB
     tbb::parallel_for(0, (int)data.F.rows(), 1, [&](int triI)
 #else
     for (int triI = 0; triI < data.F.rows(); triI++)
 #endif
         {
-            computeHessianByPK(data, triI, redoSVD,
+            computeHessianByPK1(data, triI, redoSVD,
                 svd[triI], F[triI], coef,
                 triHessians[triI], vInds[triI],
                 projectSPD, projectDBC);
@@ -330,131 +407,56 @@ void Energy<dim>::computeHessianByPK(const Mesh<dim>& data, bool redoSVD,
 #endif
 }
 
-template <int dim>
-void Energy<dim>::computeGradientByPK(const Mesh<dim>& data,
-    int elemI, bool redoSVD,
-    AutoFlipSVD<Eigen::Matrix<double, dim, dim>>& svd,
-    Eigen::Matrix<double, dim, dim>& F,
-    double coef,
-    Eigen::Matrix<double, dim*(dim + 1), 1>& gradient) const
-{
-    const Eigen::Matrix<double, dim, dim>& A = data.restTriInv[elemI];
 
-    if (redoSVD) {
-        const Eigen::Matrix<int, 1, dim + 1>& triVInd = data.F.row(elemI);
-
-        Eigen::Matrix<double, dim, dim> Xt;
-        Xt.col(0) = (data.V.row(triVInd[1]) - data.V.row(triVInd[0])).transpose();
-        Xt.col(1) = (data.V.row(triVInd[2]) - data.V.row(triVInd[0])).transpose();
-        if constexpr (dim == 3) {
-            Xt.col(2) = (data.V.row(triVInd[3]) - data.V.row(triVInd[0])).transpose();
-        }
-
-        F = Xt * A;
-
-        svd.compute(F, Eigen::ComputeFullU | Eigen::ComputeFullV);
-    }
-
-    Eigen::Matrix<double, dim, dim> P;
-    compute_dE_div_dF(F, svd,
-        data.u[elemI], data.lambda[elemI], P);
-
-    const double w = coef * data.triArea[elemI];
-    P *= w;
-
-    IglUtils::dF_div_dx_mult(P, A, gradient);
-}
-template <int dim>
-void Energy<dim>::computeHessianByPK(const Mesh<dim>& data,
-    int elemI, bool redoSVD,
-    AutoFlipSVD<Eigen::Matrix<double, dim, dim>>& svd,
-    Eigen::Matrix<double, dim, dim>& F,
-    double coef,
-    Eigen::Matrix<double, dim*(dim + 1), dim*(dim + 1)>& hessian,
-    Eigen::Matrix<int, 1, dim + 1>& vInd,
-    bool projectSPD,
-    bool projectDBC) const
-{
-    const Eigen::Matrix<int, 1, dim + 1>& triVInd = data.F.row(elemI);
-
-    const Eigen::Matrix<double, dim, dim>& A = data.restTriInv[elemI];
-
-    if (redoSVD) {
-        Eigen::Matrix<double, dim, dim> Xt;
-        Xt.col(0) = (data.V.row(triVInd[1]) - data.V.row(triVInd[0])).transpose();
-        Xt.col(1) = (data.V.row(triVInd[2]) - data.V.row(triVInd[0])).transpose();
-        if constexpr (dim == 3) {
-            Xt.col(2) = (data.V.row(triVInd[3]) - data.V.row(triVInd[0])).transpose();
-        }
-        F = Xt * A;
-        svd.compute(F, Eigen::ComputeFullU | Eigen::ComputeFullV);
-    }
-
-    Eigen::Matrix<double, dim * dim, dim * dim> wdP_div_dF;
-    const double w = coef * data.triArea[elemI];
-    compute_dP_div_dF(svd, data.u[elemI], data.lambda[elemI],
-        wdP_div_dF, w, projectSPD);
-
-    Eigen::Matrix<double, dim*(dim + 1), dim * dim> wdP_div_dx;
-    IglUtils::dF_div_dx_mult<dim * dim>(wdP_div_dF.transpose(), A, wdP_div_dx, false);
-    IglUtils::dF_div_dx_mult<dim*(dim + 1)>(wdP_div_dx.transpose(), A, hessian, true);
-
-    vInd[0] = data.isProjectDBCVertex(triVInd[0], projectDBC) ? (-triVInd[0] - 1) : triVInd[0];
-    vInd[1] = data.isProjectDBCVertex(triVInd[1], projectDBC) ? (-triVInd[1] - 1) : triVInd[1];
-    vInd[2] = data.isProjectDBCVertex(triVInd[2], projectDBC) ? (-triVInd[2] - 1) : triVInd[2];
-    if constexpr (dim == 3) {
-        vInd[3] = data.isProjectDBCVertex(triVInd[3], projectDBC) ? (-triVInd[3] - 1) : triVInd[3];
-    }
-}
 
 template <int dim>
-void Energy<dim>::compute_E(const Eigen::Matrix<double, dim, 1>& singularValues,
+void Energy<dim>::compute_E(const Eigen::Matrix<double, dim, 1, 0, dim, 1>& singularValues,
     double u, double lambda,
     double& E) const
 {
     assert(0 && "please implement this method in the subclass!");
 }
 template <int dim>
-void Energy<dim>::compute_dE_div_dsigma(const Eigen::Matrix<double, dim, 1>& singularValues,
+void Energy<dim>::compute_dE_div_dsigma(const Eigen::Matrix<double, dim, 1, 0, dim, 1>& singularValues,
     double u, double lambda,
-    Eigen::Matrix<double, dim, 1>& dE_div_dsigma) const
+    Eigen::Matrix<double, dim, 1, 0, dim, 1>& dE_div_dsigma) const
 {
     assert(0 && "please implement this method in the subclass!");
 }
 template <int dim>
-void Energy<dim>::compute_d2E_div_dsigma2(const Eigen::Matrix<double, dim, 1>& singularValues,
+void Energy<dim>::compute_d2E_div_dsigma2(const Eigen::Matrix<double, dim, 1, 0, dim, 1>& singularValues,
     double u, double lambda,
-    Eigen::Matrix<double, dim, dim>& d2E_div_dsigma2) const
+    Eigen::Matrix<double, dim, dim, 0, dim, dim>& d2E_div_dsigma2) const
 {
     assert(0 && "please implement this method in the subclass!");
 }
 template <int dim>
-void Energy<dim>::compute_BLeftCoef(const Eigen::Matrix<double, dim, 1>& singularValues,
+void Energy<dim>::compute_BLeftCoef(const Eigen::Matrix<double, dim, 1, 0, dim, 1>& singularValues,
     double u, double lambda,
-    Eigen::Matrix<double, dim*(dim - 1) / 2, 1>& BLeftCoef) const
+    Eigen::Matrix<double, dim*(dim - 1) / 2, 1, 0, dim*(dim - 1) / 2, 1>& BLeftCoef) const
 {
     assert(0 && "please implement this method in the subclass!");
 }
 template <int dim>
-void Energy<dim>::compute_dE_div_dF(const Eigen::Matrix<double, dim, dim>& F,
-    const AutoFlipSVD<Eigen::Matrix<double, dim, dim>>& svd,
+void Energy<dim>::compute_dE_div_dF(const Eigen::Matrix<double, dim, dim, 0, dim, dim>& F,
+    const AutoFlipSVD<Eigen::Matrix<double, dim, dim, 0, dim, dim>>& svd,
     double u, double lambda,
-    Eigen::Matrix<double, dim, dim>& dE_div_dF) const
+    Eigen::Matrix<double, dim, dim, 0, dim, dim>& dE_div_dF) const
 {
     assert(0 && "please implement this method in the subclass!");
 }
 
 template <int dim>
-void Energy<dim>::compute_dP_div_dF(const AutoFlipSVD<Eigen::Matrix<double, dim, dim>>& svd,
+void Energy<dim>::compute_dP_div_dF(const AutoFlipSVD<Eigen::Matrix<double, dim, dim, 0, dim, dim>>& svd,
     double u, double lambda,
-    Eigen::Matrix<double, dim * dim, dim * dim>& dP_div_dF,
+    Eigen::Matrix<double, dim * dim, dim * dim, 0, dim * dim, dim * dim>& dP_div_dF,
     double w, bool projectSPD) const
 {
     // compute A
-    const Eigen::Matrix<double, dim, 1>& sigma = svd.singularValues();
-    Eigen::Matrix<double, dim, 1> dE_div_dsigma;
+    const Eigen::Matrix<double, dim, 1, 0, dim, 1>& sigma = svd.singularValues();
+    Eigen::Matrix<double, dim, 1, 0, dim, 1> dE_div_dsigma;
     compute_dE_div_dsigma(sigma, u, lambda, dE_div_dsigma);
-    Eigen::Matrix<double, dim, dim> d2E_div_dsigma2;
+    Eigen::Matrix<double, dim, dim, 0, dim, dim> d2E_div_dsigma2;
     compute_d2E_div_dsigma2(sigma, u, lambda, d2E_div_dsigma2);
     if (projectSPD) {
 #if (DIM == 2)
@@ -466,7 +468,7 @@ void Energy<dim>::compute_dP_div_dF(const AutoFlipSVD<Eigen::Matrix<double, dim,
 
     // compute B
     const int Cdim2 = dim * (dim - 1) / 2;
-    Eigen::Matrix<double, Cdim2, 1> BLeftCoef;
+    Eigen::Matrix<double, Cdim2, 1, 0, Cdim2, 1> BLeftCoef;
     compute_BLeftCoef(sigma, u, lambda, BLeftCoef);
     Eigen::Matrix2d B[Cdim2];
     for (int cI = 0; cI < Cdim2; cI++) {
@@ -491,7 +493,7 @@ void Energy<dim>::compute_dP_div_dF(const AutoFlipSVD<Eigen::Matrix<double, dim,
     }
 
     // compute M using A(d2E_div_dsigma2) and B
-    Eigen::Matrix<double, dim * dim, dim * dim> M;
+    Eigen::Matrix<double, dim * dim, dim * dim, 0, dim * dim, dim * dim> M;
     M.setZero();
     if constexpr (dim == 2) {
         M(0, 0) = w * d2E_div_dsigma2(0, 0);
@@ -529,9 +531,9 @@ void Energy<dim>::compute_dP_div_dF(const AutoFlipSVD<Eigen::Matrix<double, dim,
     }
 
     // compute dP_div_dF
-    Eigen::Matrix<double, dim * dim, dim* dim>& wdP_div_dF = dP_div_dF;
-    const Eigen::Matrix<double, dim, dim>& U = svd.matrixU();
-    const Eigen::Matrix<double, dim, dim>& V = svd.matrixV();
+    Eigen::Matrix<double, dim * dim, dim * dim, 0, dim * dim, dim * dim>& wdP_div_dF = dP_div_dF;
+    const Eigen::Matrix<double, dim, dim, 0, dim, dim>& U = svd.matrixU();
+    const Eigen::Matrix<double, dim, dim, 0, dim, dim>& V = svd.matrixV();
     for (int i = 0; i < dim; i++) {
         int _dim_i = i * dim;
         for (int j = 0; j < dim; j++) {
@@ -583,25 +585,25 @@ void Energy<dim>::filterStepSize(const Mesh<dim>& data, const Eigen::VectorXd& s
 template <int dim>
 void Energy<dim>::unitTest_dE_div_dsigma(std::ostream& os) const
 {
-    std::vector<Eigen::Matrix<double, dim, 1>> testSigma;
+    std::vector<Eigen::Matrix<double, dim, 1, 0, dim, 1>> testSigma;
 
-    testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Ones());
+    testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Ones());
     if (needElemInvSafeGuard) {
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Random() + Eigen::Matrix<double, dim, 1>::Ones());
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Random() + Eigen::Matrix<double, dim, 1>::Ones());
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Random() + Eigen::Matrix<double, dim, 1>::Ones());
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Random() + Eigen::Matrix<double, dim, 1>::Ones());
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Random() + Eigen::Matrix<double, dim, 1>::Ones());
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Random() + Eigen::Matrix<double, dim, 1>::Ones());
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Random() + Eigen::Matrix<double, dim, 1, 0, dim, 1>::Ones());
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Random() + Eigen::Matrix<double, dim, 1, 0, dim, 1>::Ones());
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Random() + Eigen::Matrix<double, dim, 1, 0, dim, 1>::Ones());
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Random() + Eigen::Matrix<double, dim, 1, 0, dim, 1>::Ones());
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Random() + Eigen::Matrix<double, dim, 1, 0, dim, 1>::Ones());
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Random() + Eigen::Matrix<double, dim, 1, 0, dim, 1>::Ones());
     }
     else {
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Zero());
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Random() * 2);
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Random() * 2);
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Random() * 2);
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Random() * 2);
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Random() * 2);
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Random() * 2);
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Zero());
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Random() * 2);
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Random() * 2);
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Random() * 2);
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Random() * 2);
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Random() * 2);
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Random() * 2);
     }
 
     double YM = 100, PR = 0.4;
@@ -618,9 +620,9 @@ void Energy<dim>::unitTest_dE_div_dsigma(std::ostream& os) const
         double E0;
         compute_E(testSigmaI, u, lambda, E0);
 
-        Eigen::Matrix<double, dim, 1> dE_div_dsigma_FD;
+        Eigen::Matrix<double, dim, 1, 0, dim, 1> dE_div_dsigma_FD;
         for (int dimI = 0; dimI < dim; dimI++) {
-            Eigen::Matrix<double, dim, 1> sigma_perterb = testSigmaI;
+            Eigen::Matrix<double, dim, 1, 0, dim, 1> sigma_perterb = testSigmaI;
             sigma_perterb[dimI] += h;
             double E;
             compute_E(sigma_perterb, u, lambda, E);
@@ -629,7 +631,7 @@ void Energy<dim>::unitTest_dE_div_dsigma(std::ostream& os) const
         os << "dE_div_dsigma_FD =\n"
            << dE_div_dsigma_FD << std::endl;
 
-        Eigen::Matrix<double, dim, 1> dE_div_dsigma_S;
+        Eigen::Matrix<double, dim, 1, 0, dim, 1> dE_div_dsigma_S;
         compute_dE_div_dsigma(testSigmaI, u, lambda, dE_div_dsigma_S);
         os << "dE_div_dsigma_S =\n"
            << dE_div_dsigma_S << std::endl;
@@ -644,25 +646,25 @@ void Energy<dim>::unitTest_dE_div_dsigma(std::ostream& os) const
 template <int dim>
 void Energy<dim>::unitTest_d2E_div_dsigma2(std::ostream& os) const
 {
-    std::vector<Eigen::Matrix<double, dim, 1>> testSigma;
+    std::vector<Eigen::Matrix<double, dim, 1, 0, dim, 1>> testSigma;
 
-    testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Ones());
+    testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Ones());
     if (needElemInvSafeGuard) {
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Random() + Eigen::Matrix<double, dim, 1>::Ones());
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Random() + Eigen::Matrix<double, dim, 1>::Ones());
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Random() + Eigen::Matrix<double, dim, 1>::Ones());
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Random() + Eigen::Matrix<double, dim, 1>::Ones());
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Random() + Eigen::Matrix<double, dim, 1>::Ones());
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Random() + Eigen::Matrix<double, dim, 1>::Ones());
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Random() + Eigen::Matrix<double, dim, 1, 0, dim, 1>::Ones());
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Random() + Eigen::Matrix<double, dim, 1, 0, dim, 1>::Ones());
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Random() + Eigen::Matrix<double, dim, 1, 0, dim, 1>::Ones());
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Random() + Eigen::Matrix<double, dim, 1, 0, dim, 1>::Ones());
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Random() + Eigen::Matrix<double, dim, 1, 0, dim, 1>::Ones());
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Random() + Eigen::Matrix<double, dim, 1, 0, dim, 1>::Ones());
     }
     else {
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Zero());
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Random() * 2);
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Random() * 2);
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Random() * 2);
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Random() * 2);
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Random() * 2);
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Random() * 2);
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Zero());
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Random() * 2);
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Random() * 2);
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Random() * 2);
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Random() * 2);
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Random() * 2);
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Random() * 2);
     }
 
     double YM = 100, PR = 0.4;
@@ -676,21 +678,21 @@ void Energy<dim>::unitTest_d2E_div_dsigma2(std::ostream& os) const
            << "sigma =\n"
            << testSigmaI << std::endl;
 
-        Eigen::Matrix<double, dim, 1> dE_div_dsigma0;
+        Eigen::Matrix<double, dim, 1, 0, dim, 1> dE_div_dsigma0;
         compute_dE_div_dsigma(testSigmaI, u, lambda, dE_div_dsigma0);
 
-        Eigen::Matrix<double, dim, dim> d2E_div_dsigma2_FD;
+        Eigen::Matrix<double, dim, dim, 0, dim, dim> d2E_div_dsigma2_FD;
         for (int dimI = 0; dimI < dim; dimI++) {
-            Eigen::Matrix<double, dim, 1> sigma_perterb = testSigmaI;
+            Eigen::Matrix<double, dim, 1, 0, dim, 1> sigma_perterb = testSigmaI;
             sigma_perterb[dimI] += h;
-            Eigen::Matrix<double, dim, 1> dE_div_dsigma;
+            Eigen::Matrix<double, dim, 1, 0, dim, 1> dE_div_dsigma;
             compute_dE_div_dsigma(sigma_perterb, u, lambda, dE_div_dsigma);
             d2E_div_dsigma2_FD.row(dimI) = ((dE_div_dsigma - dE_div_dsigma0) / h).transpose();
         }
         os << "d2E_div_dsigma2_FD =\n"
            << d2E_div_dsigma2_FD << std::endl;
 
-        Eigen::Matrix<double, dim, dim> d2E_div_dsigma2_S;
+        Eigen::Matrix<double, dim, dim, 0, dim, dim> d2E_div_dsigma2_S;
         compute_d2E_div_dsigma2(testSigmaI, u, lambda, d2E_div_dsigma2_S);
         os << "d2E_div_dsigma2_S =\n"
            << d2E_div_dsigma2_S << std::endl;
@@ -705,24 +707,24 @@ void Energy<dim>::unitTest_d2E_div_dsigma2(std::ostream& os) const
 template <int dim>
 void Energy<dim>::unitTest_BLeftCoef(std::ostream& os) const
 {
-    std::vector<Eigen::Matrix<double, dim, 1>> testSigma;
+    std::vector<Eigen::Matrix<double, dim, 1, 0, dim, 1>> testSigma;
 
     if (needElemInvSafeGuard) {
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Random() + Eigen::Matrix<double, dim, 1>::Ones());
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Random() + Eigen::Matrix<double, dim, 1>::Ones());
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Random() + Eigen::Matrix<double, dim, 1>::Ones());
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Random() + Eigen::Matrix<double, dim, 1>::Ones());
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Random() + Eigen::Matrix<double, dim, 1>::Ones());
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Random() + Eigen::Matrix<double, dim, 1>::Ones());
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Random() + Eigen::Matrix<double, dim, 1, 0, dim, 1>::Ones());
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Random() + Eigen::Matrix<double, dim, 1, 0, dim, 1>::Ones());
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Random() + Eigen::Matrix<double, dim, 1, 0, dim, 1>::Ones());
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Random() + Eigen::Matrix<double, dim, 1, 0, dim, 1>::Ones());
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Random() + Eigen::Matrix<double, dim, 1, 0, dim, 1>::Ones());
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Random() + Eigen::Matrix<double, dim, 1, 0, dim, 1>::Ones());
     }
     else {
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Zero());
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Random() * 2);
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Random() * 2);
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Random() * 2);
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Random() * 2);
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Random() * 2);
-        testSigma.emplace_back(Eigen::Matrix<double, dim, 1>::Random() * 2);
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Zero());
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Random() * 2);
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Random() * 2);
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Random() * 2);
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Random() * 2);
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Random() * 2);
+        testSigma.emplace_back(Eigen::Matrix<double, dim, 1, 0, dim, 1>::Random() * 2);
     }
 
     double YM = 100, PR = 0.4;
@@ -735,8 +737,8 @@ void Energy<dim>::unitTest_BLeftCoef(std::ostream& os) const
            << "sigma =\n"
            << testSigmaI << std::endl;
 
-        Eigen::Matrix<double, dim*(dim - 1) / 2, 1> BLeftCoef_div;
-        Eigen::Matrix<double, dim, 1> dE_div_dsigma;
+        Eigen::Matrix<double, dim*(dim - 1) / 2, 1, 0, dim*(dim - 1) / 2, 1> BLeftCoef_div;
+        Eigen::Matrix<double, dim, 1, 0, dim, 1> dE_div_dsigma;
         compute_dE_div_dsigma(testSigmaI, u, lambda, dE_div_dsigma);
         if constexpr (dim == 2) {
             BLeftCoef_div[0] = (dE_div_dsigma[0] - dE_div_dsigma[1]) / (testSigmaI[0] - testSigmaI[1]) / 2.0;
@@ -749,7 +751,7 @@ void Energy<dim>::unitTest_BLeftCoef(std::ostream& os) const
         os << "BLeftCoef_div =\n"
            << BLeftCoef_div << std::endl;
 
-        Eigen::Matrix<double, dim*(dim - 1) / 2, 1> BLeftCoef_S;
+        Eigen::Matrix<double, dim*(dim - 1) / 2, 1, 0, dim*(dim - 1) / 2, 1> BLeftCoef_S;
         compute_BLeftCoef(testSigmaI, u, lambda, BLeftCoef_S);
         os << "BLeftCoef_S =\n"
            << BLeftCoef_S << std::endl;
@@ -765,20 +767,20 @@ template <int dim>
 void Energy<dim>::unitTest_dE_div_dF(std::ostream& os) const
 {
     const double h = 1.0e-6;
-    std::vector<Eigen::Matrix<double, dim, dim>> testF;
+    std::vector<Eigen::Matrix<double, dim, dim, 0, dim, dim>> testF;
 
-    testF.emplace_back(Eigen::Matrix<double, dim, dim>::Identity());
+    testF.emplace_back(Eigen::Matrix<double, dim, dim, 0, dim, dim>::Identity());
     if (needElemInvSafeGuard) {
         for (int testI = 0; testI < 6; testI++) {
-            testF.emplace_back(Eigen::Matrix<double, dim, dim>::Random());
+            testF.emplace_back(Eigen::Matrix<double, dim, dim, 0, dim, dim>::Random());
             IglUtils::flipDet_SVD(testF.back());
-            testF.back() += 1.0e-2 * Eigen::Matrix<double, dim, dim>::Identity();
+            testF.back() += 1.0e-2 * Eigen::Matrix<double, dim, dim, 0, dim, dim>::Identity();
         }
     }
     else {
-        testF.emplace_back(Eigen::Matrix<double, dim, dim>::Zero());
+        testF.emplace_back(Eigen::Matrix<double, dim, dim, 0, dim, dim>::Zero());
         for (int testI = 0; testI < 6; testI++) {
-            testF.emplace_back(Eigen::Matrix<double, dim, dim>::Random());
+            testF.emplace_back(Eigen::Matrix<double, dim, dim, 0, dim, dim>::Random());
         }
     }
 
@@ -792,17 +794,17 @@ void Energy<dim>::unitTest_dE_div_dF(std::ostream& os) const
            << "F =\n"
            << testFI << std::endl;
 
-        AutoFlipSVD<Eigen::Matrix<double, dim, dim>> svd0(testFI, Eigen::ComputeFullU | Eigen::ComputeFullV);
+        AutoFlipSVD<Eigen::Matrix<double, dim, dim, 0, dim, dim>> svd0(testFI, Eigen::ComputeFullU | Eigen::ComputeFullV);
         double E0;
         compute_E(svd0.singularValues(), u, lambda, E0);
 
-        Eigen::Matrix<double, dim, dim> P_FD;
+        Eigen::Matrix<double, dim, dim, 0, dim, dim> P_FD;
         for (int dimI = 0; dimI < dim; dimI++) {
             for (int dimJ = 0; dimJ < dim; dimJ++) {
-                Eigen::Matrix<double, dim, dim> F_perterb = testFI;
+                Eigen::Matrix<double, dim, dim, 0, dim, dim> F_perterb = testFI;
                 F_perterb(dimI, dimJ) += h;
 
-                AutoFlipSVD<Eigen::Matrix<double, dim, dim>> svd(F_perterb, Eigen::ComputeFullU | Eigen::ComputeFullV);
+                AutoFlipSVD<Eigen::Matrix<double, dim, dim, 0, dim, dim>> svd(F_perterb, Eigen::ComputeFullU | Eigen::ComputeFullV);
                 double E;
                 compute_E(svd.singularValues(), u, lambda, E);
 
@@ -812,7 +814,7 @@ void Energy<dim>::unitTest_dE_div_dF(std::ostream& os) const
         os << "P_FD =\n"
            << P_FD << std::endl;
 
-        Eigen::Matrix<double, dim, dim> P_S;
+        Eigen::Matrix<double, dim, dim, 0, dim, dim> P_S;
         compute_dE_div_dF(testFI, svd0, u, lambda, P_S);
         os << "P_S =\n"
            << P_S << std::endl;
@@ -828,20 +830,20 @@ template <int dim>
 void Energy<dim>::unitTest_dP_div_dF(std::ostream& os) const
 {
     const double h = 1.0e-6;
-    std::vector<Eigen::Matrix<double, dim, dim>> testF;
+    std::vector<Eigen::Matrix<double, dim, dim, 0, dim, dim>> testF;
 
-    testF.emplace_back(Eigen::Matrix<double, dim, dim>::Identity());
+    testF.emplace_back(Eigen::Matrix<double, dim, dim, 0, dim, dim>::Identity());
     if (needElemInvSafeGuard) {
         for (int testI = 0; testI < 6; testI++) {
-            testF.emplace_back(Eigen::Matrix<double, dim, dim>::Random());
+            testF.emplace_back(Eigen::Matrix<double, dim, dim, 0, dim, dim>::Random());
             IglUtils::flipDet_SVD(testF.back());
-            testF.back() += 1.0e-2 * Eigen::Matrix<double, dim, dim>::Identity();
+            testF.back() += 1.0e-2 * Eigen::Matrix<double, dim, dim, 0, dim, dim>::Identity();
         }
     }
     else {
-        testF.emplace_back(Eigen::Matrix<double, dim, dim>::Zero());
+        testF.emplace_back(Eigen::Matrix<double, dim, dim, 0, dim, dim>::Zero());
         for (int testI = 0; testI < 6; testI++) {
-            testF.emplace_back(Eigen::Matrix<double, dim, dim>::Random());
+            testF.emplace_back(Eigen::Matrix<double, dim, dim, 0, dim, dim>::Random());
         }
     }
 
@@ -855,20 +857,20 @@ void Energy<dim>::unitTest_dP_div_dF(std::ostream& os) const
            << "F =\n"
            << testFI << std::endl;
 
-        AutoFlipSVD<Eigen::Matrix<double, dim, dim>> svd(testFI, Eigen::ComputeFullU | Eigen::ComputeFullV);
-        Eigen::Matrix<double, dim, dim> P0;
+        AutoFlipSVD<Eigen::Matrix<double, dim, dim, 0, dim, dim>> svd(testFI, Eigen::ComputeFullU | Eigen::ComputeFullV);
+        Eigen::Matrix<double, dim, dim, 0, dim, dim> P0;
         compute_dE_div_dF(testFI, svd, u, lambda, P0);
 
-        Eigen::Matrix<double, dim * dim, dim * dim> dP_div_dF_FD;
+        Eigen::Matrix<double, dim * dim, dim * dim, 0, dim * dim, dim * dim> dP_div_dF_FD;
         for (int dimI = 0; dimI < dim; dimI++) {
             for (int dimJ = 0; dimJ < dim; dimJ++) {
-                Eigen::Matrix<double, dim, dim> F_perterb = testFI;
+                Eigen::Matrix<double, dim, dim, 0, dim, dim> F_perterb = testFI;
                 F_perterb(dimI, dimJ) += h;
-                Eigen::Matrix<double, dim, dim> P;
-                AutoFlipSVD<Eigen::Matrix<double, dim, dim>> svd(F_perterb, Eigen::ComputeFullU | Eigen::ComputeFullV);
+                Eigen::Matrix<double, dim, dim, 0, dim, dim> P;
+                AutoFlipSVD<Eigen::Matrix<double, dim, dim, 0, dim, dim>> svd(F_perterb, Eigen::ComputeFullU | Eigen::ComputeFullV);
                 compute_dE_div_dF(F_perterb, svd, u, lambda, P);
 
-                Eigen::Matrix<double, dim, dim> FD = (P - P0) / h;
+                Eigen::Matrix<double, dim, dim, 0, dim, dim> FD = (P - P0) / h;
                 dP_div_dF_FD.block(0, dimI * dim + dimJ, dim, 1) = FD.row(0).transpose();
                 dP_div_dF_FD.block(dim, dimI * dim + dimJ, dim, 1) = FD.row(1).transpose();
                 if constexpr (dim == 3) {
@@ -879,7 +881,7 @@ void Energy<dim>::unitTest_dP_div_dF(std::ostream& os) const
         os << "dP_div_dF_FD =\n"
            << dP_div_dF_FD << std::endl;
 
-        Eigen::Matrix<double, dim * dim, dim * dim> dP_div_dF_S;
+        Eigen::Matrix<double, dim * dim, dim * dim, 0, dim * dim, dim * dim> dP_div_dF_S;
         svd.compute(testFI, Eigen::ComputeFullU | Eigen::ComputeFullV);
         compute_dP_div_dF(svd, u, lambda, dP_div_dF_S, 1.0, false);
         os << "dP_div_dF_S =\n"

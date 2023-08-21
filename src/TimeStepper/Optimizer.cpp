@@ -40,7 +40,7 @@
 
 // #define SAVE_EXTREME_LINESEARCH_CCD
 
-extern const std::string outputFolderPath;
+extern const std::string outputFolderPath = "output/";
 
 extern std::ofstream logFile;
 extern Timer timer, timer_step, timer_temp, timer_temp2, timer_temp3, timer_mt;

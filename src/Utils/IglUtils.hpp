@@ -37,8 +37,8 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 public:
     template <int dim>
-    static void addBlockToMatrix(const Eigen::Matrix<double, dim, dim*(dim + 1)>& block,
-        const Eigen::Matrix<int, 1, dim + 1>& index, int rowIndI,
+    static void addBlockToMatrix(const Eigen::Matrix<double, dim, dim*(dim + 1), 0, dim, dim*(dim + 1)>& block,
+        const Eigen::Matrix<int, 1, dim + 1, 1, 1, dim + 1>& index, int rowIndI,
         LinSysSolver<Eigen::VectorXi, Eigen::VectorXd>* linSysSolver)
     {
         int rowStart = index[rowIndI] * dim;
@@ -117,9 +117,9 @@ public:
 
     // project a symmetric real matrix to the nearest SPD matrix
     template <typename Scalar, int size>
-    static void makePD(Eigen::Matrix<Scalar, size, size>& symMtr)
+    static void makePD(Eigen::Matrix<Scalar, size, size, 0, size, size>& symMtr)
     {
-        Eigen::SelfAdjointEigenSolver<Eigen::Matrix<Scalar, size, size>> eigenSolver(symMtr);
+        Eigen::SelfAdjointEigenSolver<Eigen::Matrix<Scalar, size, size, 0, size, size>> eigenSolver(symMtr);
         if (eigenSolver.eigenvalues()[0] >= 0.0) {
             return;
         }
@@ -136,7 +136,7 @@ public:
         symMtr = eigenSolver.eigenvectors() * D * eigenSolver.eigenvectors().transpose();
     }
     template <typename Scalar, int size>
-    static void makePD2d(Eigen::Matrix<Scalar, size, size>& symMtr)
+    static void makePD2d(Eigen::Matrix<Scalar, size, size, 0, size, size>& symMtr)
     {
         // based on http://www.math.harvard.edu/archive/21b_fall_04/exhibits/2dmatrices/
 
@@ -176,11 +176,11 @@ public:
         }
     }
     template <typename Scalar, int size>
-    static void flipDet_SVD(Eigen::Matrix<Scalar, size, size>& mtr)
+    static void flipDet_SVD(Eigen::Matrix<Scalar, size, size, 0, size, size>& mtr)
     {
-        Eigen::JacobiSVD<Eigen::Matrix<Scalar, size, size>> svd(mtr, Eigen::ComputeFullU | Eigen::ComputeFullV);
+        Eigen::JacobiSVD<Eigen::Matrix<Scalar, size, size, 0, size, size>> svd(mtr, Eigen::ComputeFullU | Eigen::ComputeFullV);
 
-        Eigen::Matrix<Scalar, size, size> U = svd.matrixU(), V = svd.matrixV();
+        Eigen::Matrix<Scalar, size, size, 0, size, size> U = svd.matrixU(), V = svd.matrixV();
         if (U.determinant() < 0) {
             U.col(U.cols() - 1) *= -1.0;
         }
@@ -335,9 +335,9 @@ public:
         Eigen::MatrixXi& F);
 
     template <int colSize>
-    static void dF_div_dx_mult(const Eigen::Matrix<double, DIM * DIM, colSize>& right,
-        const Eigen::Matrix<double, DIM, DIM>& A,
-        Eigen::Matrix<double, DIM*(DIM + 1), colSize>& result,
+    static void dF_div_dx_mult(const Eigen::Matrix<double, DIM * DIM, colSize, 0, DIM * DIM, colSize>& right,
+        const Eigen::Matrix<double, DIM, DIM, 0, DIM, DIM>& A,
+        Eigen::Matrix<double, DIM*(DIM + 1), colSize, 0, DIM*(DIM + 1), colSize>& result,
         bool symmetric)
     {
         if (colSize == Eigen::Dynamic) {
@@ -430,12 +430,12 @@ public:
         }
 #endif
     }
-    static void dF_div_dx_mult(const Eigen::Matrix<double, DIM, DIM>& right,
-        const Eigen::Matrix<double, DIM, DIM>& A,
-        Eigen::Matrix<double, DIM*(DIM + 1), 1>& result);
+    static void dF_div_dx_mult(const Eigen::Matrix<double, DIM, DIM, 0, DIM, DIM>& right,
+        const Eigen::Matrix<double, DIM, DIM, 0, DIM, DIM>& A,
+        Eigen::Matrix<double, DIM*(DIM + 1), 1, 0, DIM*(DIM + 1), 1>& result);
     template <int dim>
-    static void computeCofactorMtr(const Eigen::Matrix<double, dim, dim>& F,
-        Eigen::Matrix<double, dim, dim>& A)
+    static void computeCofactorMtr(const Eigen::Matrix<double, dim, dim, 0, dim, dim>& F,
+        Eigen::Matrix<double, dim, dim, 0, dim, dim>& A)
     {
         switch (dim) {
         case 2:

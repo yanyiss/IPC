@@ -10,6 +10,7 @@
 
 #include "Mesh.hpp"
 
+#define _HAS_STD_BYTE 0
 #ifdef USE_CLOSEDFORMSVD2D
 #include "ClosedFormSVD2d.hpp"
 #else
@@ -40,19 +41,19 @@ public:
 public:
     // interfaces to time integration methods
     virtual void computeEnergyVal(const Mesh<dim>& data, int redoSVD,
-        std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim>>>& svd,
-        std::vector<Eigen::Matrix<double, dim, dim>>& F,
+        std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim, 0, dim, dim>>>& svd,
+        std::vector<Eigen::Matrix<double, dim, dim, 0, dim, dim>>& F,
         double coef,
         double& energyVal) const;
     virtual void computeGradient(const Mesh<dim>& data, bool redoSVD,
-        std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim>>>& svd,
-        std::vector<Eigen::Matrix<double, dim, dim>>& F,
+        std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim, 0, dim, dim>>>& svd,
+        std::vector<Eigen::Matrix<double, dim, dim, 0, dim, dim>>& F,
         double coef,
         Eigen::VectorXd& gradient,
         bool projectDBC = true) const;
     virtual void computeHessian(const Mesh<dim>& data, bool redoSVD,
-        std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim>>>& svd,
-        std::vector<Eigen::Matrix<double, dim, dim>>& F,
+        std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim, 0, dim, dim>>>& svd,
+        std::vector<Eigen::Matrix<double, dim, dim, 0, dim, dim>>& F,
         double coef,
         LinSysSolver<Eigen::VectorXi, Eigen::VectorXd>* linSysSolver,
         bool projectSPD = true,
@@ -64,66 +65,66 @@ public:
 
     // common computation framework implementation
     virtual void getEnergyValPerElemBySVD(const Mesh<dim>& data, int redoSVD,
-        std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim>>>& svd,
-        std::vector<Eigen::Matrix<double, dim, dim>>& F,
+        std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim, 0, dim, dim>>>& svd,
+        std::vector<Eigen::Matrix<double, dim, dim, 0, dim, dim>>& F,
         Eigen::VectorXd& energyValPerElem,
         bool uniformWeight = false) const;
     virtual void computeEnergyValBySVD(const Mesh<dim>& data, int redoSVD,
-        std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim>>>& svd,
-        std::vector<Eigen::Matrix<double, dim, dim>>& F,
+        std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim, 0, dim, dim>>>& svd,
+        std::vector<Eigen::Matrix<double, dim, dim, 0, dim, dim>>& F,
         double coef,
         double& energyVal) const;
     virtual void computeGradientByPK(const Mesh<dim>& data, bool redoSVD,
-        std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim>>>& svd,
-        std::vector<Eigen::Matrix<double, dim, dim>>& F,
+        std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim, 0, dim, dim>>>& svd,
+        std::vector<Eigen::Matrix<double, dim, dim, 0, dim, dim>>& F,
         double coef,
         Eigen::VectorXd& gradient,
         bool projectDBC = true) const;
     virtual void computeHessianByPK(const Mesh<dim>& data, bool redoSVD,
-        std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim>>>& svd,
-        std::vector<Eigen::Matrix<double, dim, dim>>& F,
+        std::vector<AutoFlipSVD<Eigen::Matrix<double, dim, dim, 0, dim, dim>>>& svd,
+        std::vector<Eigen::Matrix<double, dim, dim, 0, dim, dim>>& F,
         double coef,
         LinSysSolver<Eigen::VectorXi, Eigen::VectorXd>* linSysSolver,
         bool projectSPD = true,
         bool projectDBC = true) const;
 
     // common computation framework implementation -- per element computation
-    virtual void computeGradientByPK(const Mesh<dim>& data,
+    virtual void computeGradientByPK1(const Mesh<dim>& data,
         int elemI, bool redoSVD,
-        AutoFlipSVD<Eigen::Matrix<double, dim, dim>>& svd,
-        Eigen::Matrix<double, dim, dim>& F,
+        AutoFlipSVD<Eigen::Matrix<double, dim, dim, 0, dim, dim>>& svd,
+        Eigen::Matrix<double, dim, dim, 0, dim, dim>& F,
         double coef,
-        Eigen::Matrix<double, dim*(dim + 1), 1>& gradient) const;
-    virtual void computeHessianByPK(const Mesh<dim>& data,
+        Eigen::Matrix<double, dim*(dim + 1), 1, 0, dim*(dim + 1), 1>& gradient) const;
+    virtual void computeHessianByPK1(const Mesh<dim>& data,
         int elemI, bool redoSVD,
-        AutoFlipSVD<Eigen::Matrix<double, dim, dim>>& svd,
-        Eigen::Matrix<double, dim, dim>& F,
+        AutoFlipSVD<Eigen::Matrix<double, dim, dim, 0, dim, dim>>& svd,
+        Eigen::Matrix<double, dim, dim, 0, dim, dim>& F,
         double coef,
-        Eigen::Matrix<double, dim*(dim + 1), dim*(dim + 1)>& hessian,
-        Eigen::Matrix<int, 1, dim + 1>& vInd,
+        Eigen::Matrix<double, dim*(dim + 1), dim*(dim + 1), 0, dim*(dim + 1), dim*(dim + 1)>& hessian,
+        Eigen::Matrix<int, 1, dim + 1, 1, 1, dim + 1>& vInd,
         bool projectSPD = true,
         bool projectDBC = true) const;
 
     // subclass interfaces -- components
-    virtual void compute_E(const Eigen::Matrix<double, dim, 1>& singularValues,
+    virtual void compute_E(const Eigen::Matrix<double, dim, 1, 0, dim, 1>& singularValues,
         double u, double lambda,
         double& E) const;
-    virtual void compute_dE_div_dsigma(const Eigen::Matrix<double, dim, 1>& singularValues,
+    virtual void compute_dE_div_dsigma(const Eigen::Matrix<double, dim, 1, 0, dim, 1>& singularValues,
         double u, double lambda,
-        Eigen::Matrix<double, dim, 1>& dE_div_dsigma) const;
-    virtual void compute_d2E_div_dsigma2(const Eigen::Matrix<double, dim, 1>& singularValues,
+        Eigen::Matrix<double, dim, 1, 0, dim, 1>& dE_div_dsigma) const;
+    virtual void compute_d2E_div_dsigma2(const Eigen::Matrix<double, dim, 1, 0, dim, 1>& singularValues,
         double u, double lambda,
-        Eigen::Matrix<double, dim, dim>& d2E_div_dsigma2) const;
-    virtual void compute_BLeftCoef(const Eigen::Matrix<double, dim, 1>& singularValues,
+        Eigen::Matrix<double, dim, dim, 0, dim, dim>& d2E_div_dsigma2) const;
+    virtual void compute_BLeftCoef(const Eigen::Matrix<double, dim, 1, 0, dim, 1>& singularValues,
         double u, double lambda,
-        Eigen::Matrix<double, dim*(dim - 1) / 2, 1>& BLeftCoef) const;
-    virtual void compute_dE_div_dF(const Eigen::Matrix<double, dim, dim>& F,
-        const AutoFlipSVD<Eigen::Matrix<double, dim, dim>>& svd,
+        Eigen::Matrix<double, dim*(dim - 1) / 2, 1, 0, dim*(dim - 1) / 2, 1>& BLeftCoef) const;
+    virtual void compute_dE_div_dF(const Eigen::Matrix<double, dim, dim, 0, dim, dim>& F,
+        const AutoFlipSVD<Eigen::Matrix<double, dim, dim, 0, dim, dim>>& svd,
         double u, double lambda,
-        Eigen::Matrix<double, dim, dim>& dE_div_dF) const;
-    virtual void compute_dP_div_dF(const AutoFlipSVD<Eigen::Matrix<double, dim, dim>>& svd,
+        Eigen::Matrix<double, dim, dim, 0, dim, dim>& dE_div_dF) const;
+    virtual void compute_dP_div_dF(const AutoFlipSVD<Eigen::Matrix<double, dim, dim, 0, dim, dim>>& svd,
         double u, double lambda,
-        Eigen::Matrix<double, dim * dim, dim * dim>& dP_div_dF,
+        Eigen::Matrix<double, dim * dim, dim * dim, 0, dim * dim, dim * dim>& dP_div_dF,
         double w, bool projectSPD = true) const;
 
     virtual void filterStepSize(const Mesh<dim>& data,

@@ -814,7 +814,9 @@ int main(int argc, char* argv[])
     igl::colormap(igl::COLOR_MAP_TYPE_VIRIDIS, 2.0 / 9.0, zeroDirichletVertsColor.data());
     igl::colormap(igl::COLOR_MAP_TYPE_VIRIDIS, 4.0 / 9.0, nonzeroDirichletVertsColor.data());
     igl::colormap(igl::COLOR_MAP_TYPE_VIRIDIS, 2.0 / 3.0, neumannVertsColor.data());
-
+    //argv[1] = "11";
+    argv[2] = "C:\\Git Code\\IPC\\input\\tutorialExamples\\2cubesFall_full.txt";
+    std::cout << argv[0] << " " << argv[1] << " " << argv[2];
     CLIArgs args(argc, argv);
 
 #ifdef USE_TBB
@@ -876,7 +878,7 @@ int main(int argc, char* argv[])
     std::vector<IPC::NeumannBC> NeumannBCs;
     std::vector<std::pair<int, std::string>> meshSeqFolderPath;
     if (suffix == ".txt" || suffix == ".ipc") {
-        loadSucceed = !config.loadFromFile(meshFilePath);
+        loadSucceed = !config.loadFromFile(meshFilePath.string());
         if (loadSucceed) {
             assert(DIM == 3);
 
@@ -905,7 +907,8 @@ int main(int argc, char* argv[])
                 }
                 else {
                     const std::string meshFileSuffix = inputShapePath.extension().string();
-                    const std::string inputShapePathNoSuffix = inputShapePath.parent_path() / inputShapePath.stem();
+                    fs::path fff = inputShapePath.parent_path() / inputShapePath.stem();
+                    const std::string inputShapePathNoSuffix = fff.string();
                     if (meshFileSuffix == ".msh") {
                         if (!IPC::IglUtils::readTetMesh(inputShapePathStr, newV, newF, newSF)) {
                             spdlog::error("Unable to read input msh file: {:s}", inputShapePathStr);
